@@ -1,0 +1,56 @@
+=========== Flow of Github ===========:
+1. Go to "https://github.com/settings/developers" (Authorization Server)
+ -> Create a New Oauth App -> gen client secret
+ -> Config Homepage URL = "http://localhost:8080"
+ -> Config Authorization callback URL = "http://localhost:8080/login/oauth2/code/github"
+
+2. Add dependencies to pom.xml:
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId> <!--aaaaaaaaaaaaaaaaaaaaaaaa-->
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-oauth2-client</artifactId> <!--aaaaaaaaaaaaaaaaaaaaaaaa-->
+    </dependency>
+
+3. Add config to application.yml:
+    spring:
+      security:
+        oauth2:
+          client:
+            registration:
+              github:
+    #            config on https://github.com/settings/applications/2072499
+                client-id: 089dbdad5d50b9db31c2
+                client-secret: 5c6648f09bed69ac8d73a6f2ee3c5e20fd2d1e72
+
+4. Add config to Spring Security: HttpSecurity.oauth2Login()
+
+5. Start app -> access to GET "localhost:8080/oauth2/authorization/github"
+
+6. Spring will redirect to Authorize Page:
+    GET "https://github.com/login/oauth/authorize
+        ?response_type=code
+        &client_id=089dbdad5d50b9db31c2
+        &scope=read:user
+        &state=zy0UzE4zbP1FgCRkB0A8LZt4nqA7-Yb5pBu4XOedbPc%3D
+        &redirect_uri=http://localhost:8080/login/oauth2/code/github"
+
+    GitHub check if user NOT logged in yet -> Redirect to Login Form
+        GET https://github.com/login
+            ?client_id=089dbdad5d50b9db31c2
+            &return_to=/login/oauth/authorize
+            ?client_id=089dbdad5d50b9db31c2
+            &redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgithub
+            &response_type=code
+            &scope=read%3Auser
+            &state=t0v23SrYFu4a_Pjw-_3oYkWjeIp95PEDUD0hNpleR3s%3D
+        -> Re-redirect to Authorize Page
+    Else (ALREADY logged in) -> Go ahead to Authorize Page
+
+7. User Click to button "Authorize <GitHub username>" -> Redirect to "http://localhost:8080" -> load Home page index.html
+
+8. Ajax $.get("/user") run after page loaded
+-> Controller get username from Spring Security "@AuthenticationPrincipal OAuth2User principal" -> Return response data
+
